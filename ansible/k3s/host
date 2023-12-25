@@ -1,0 +1,4 @@
+[srv]
+server1 ansible_host=192.168.20.116
+[worker]
+server2 ansible_host=192.168.20.162

@@ -1,0 +1,33 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  remote_user: adminotel
+  tasks:
+
+
+  - name: Get & Install k3s on master
+    shell:
+      cmd: curl -sfL https://get.k3s.io | sh -
+    when: "'server1' in inventory_hostname"
+
+  - name: Kubeconfig permissions
+    file:
+      path: /etc/rancher/k3s/k3s.yaml
+      mode: '0644'
+    when: "'server1' in inventory_hostname"
+
+  - name: Get token
+    shell:
+      cmd: cat /var/lib/rancher/k3s/server/node-token
+    register: token_out
+    when: "'server1' in inventory_hostname"
+
+  - name: Print token
+    debug: var=token_out.stdout_lines
+    when: "'server1' in inventory_hostname"
+
+  - name: Get & Install k3s worker
+    shell:
+      cmd: "curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars['server1']['ansible_default_ipv4']['address'] }}:6443 K3S_TOKEN={{ hostvars['server1'].token_out.stdout }} sh -"
+    when: inventory_hostname in groups["worker"]
+

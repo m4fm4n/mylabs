@@ -1,0 +1,34 @@
+- hosts: srv
+  become: true
+  gather_facts: yes
+  remote_user: adminotel
+  tasks:
+
+  - name: Install docker through get.docker.com
+    shell: 
+      cmd: |
+        curl -fsSL https://get.docker.com -o install-docker.sh
+        sh install-docker.sh
+
+  - name: Add $USER to docker group
+    user:
+      name: adminotel
+      groups: docker
+      append: true
+
+  - name: Run Jenkins in docker
+    shell:
+      cmd: docker run -d -p 8080:8080 -p 50000:50000 jenkins:2.60.3
+
+  - name: Get AdminPassword
+    shell:
+      cmd: |
+        sleep 30
+        docker exec -it $(docker ps --last 1 -q) cat /var/jenkins_home/secrets/initialAdminPassword
+    register: passwd
+
+  - name: Print password
+    debug: var=passwd.stdout_lines
+    # debug:
+    #  msg: "InitailAdminPassword is: {{ passwd }}"
+
